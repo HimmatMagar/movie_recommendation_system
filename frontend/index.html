@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+      <title>CineMatch AI · Movie Recommender</title>
+      <style>
+            * {
+                  margin: 0;
+                  padding: 0;
+                  box-sizing: border-box;
+                  font-family: system-ui, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif;
+            }
+
+            body {
+                  background: linear-gradient(145deg, #0b1120 0%, #10182f 100%);
+                  min-height: 100vh;
+                  padding: 2rem 1.5rem;
+            }
+
+            /* main container */
+            .app {
+                  max-width: 1400px;
+                  margin: 0 auto;
+            }
+
+            /* header & tagline */
+            .hero {
+                  text-align: center;
+                  margin-bottom: 2.5rem;
+            }
+
+            .hero h1 {
+                  font-size: 2.6rem;
+                  font-weight: 700;
+                  background: linear-gradient(135deg, #ffffff, #b9c8ff);
+                  background-clip: text;
+                  -webkit-background-clip: text;
+                  color: transparent;
+                  letter-spacing: -0.3px;
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 10px;
+            }
+
+            .hero h1 span {
+                  background: none;
+                  color: #facc15;
+                  background-clip: unset;
+                  -webkit-background-clip: unset;
+            }
+
+            .tagline {
+                  color: #94a3b8;
+                  margin-top: 0.75rem;
+                  font-size: 1.05rem;
+                  font-weight: 400;
+            }
+
+            /* recommendation panel */
+            .rec-panel {
+                  background: rgba(15, 25, 45, 0.65);
+                  backdrop-filter: blur(12px);
+                  border-radius: 2.5rem;
+                  padding: 1.8rem 2rem;
+                  margin-bottom: 2.5rem;
+                  border: 1px solid rgba(255, 255, 255, 0.1);
+                  box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.4);
+                  transition: all 0.2s ease;
+            }
+
+            .rec-header {
+                  display: flex;
+                  align-items: baseline;
+                  flex-wrap: wrap;
+                  gap: 12px;
+                  margin-bottom: 1.5rem;
+                  justify-content: space-between;
+                  border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+                  padding-bottom: 0.75rem;
+            }
+
+            .rec-header h2 {
+                  font-size: 1.6rem;
+                  font-weight: 600;
+                  color: #eef2ff;
+            }
+
+            .rec-badge {
+                  background: #1e293b;
+                  padding: 0.25rem 1rem;
+                  border-radius: 40px;
+                  font-size: 0.8rem;
+                  font-weight: 500;
+                  color: #a5f3fc;
+            }
+
+            .movie-grid {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+                  gap: 1.8rem;
+                  margin-top: 1rem;
+            }
+
+            /* movie card */
+            .movie-card {
+                  background: #0f172ad9;
+                  border-radius: 1.8rem;
+                  overflow: hidden;
+                  transition: transform 0.2s ease, box-shadow 0.2s ease;
+                  border: 1px solid rgba(255, 215, 100, 0.2);
+                  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+                  backdrop-filter: blur(4px);
+            }
+
+            .movie-card:hover {
+                  transform: translateY(-6px);
+                  border-color: #facc1550;
+                  box-shadow: 0 20px 30px -12px black;
+            }
+
+            .movie-img {
+                  background: linear-gradient(145deg, #1e2a3a, #0f1722);
+                  height: 200px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 3.5rem;
+                  font-weight: 500;
+                  color: #facc15;
+                  border-bottom: 2px solid #facc1520;
+            }
+
+            .movie-info {
+                  padding: 1.2rem 1rem 1.3rem;
+            }
+
+            .movie-title {
+                  font-size: 1.25rem;
+                  font-weight: 700;
+                  color: white;
+                  letter-spacing: -0.2px;
+                  margin-bottom: 0.35rem;
+            }
+
+            .movie-year {
+                  font-size: 0.8rem;
+                  color: #9ca3af;
+                  display: inline-block;
+                  background: #1e293b;
+                  padding: 0.2rem 0.7rem;
+                  border-radius: 30px;
+            }
+
+            .movie-genre {
+                  font-size: 0.75rem;
+                  color: #cbd5e6;
+                  margin: 0.6rem 0 0.4rem;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+            }
+
+            .movie-rating {
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  margin-top: 8px;
+                  font-size: 0.85rem;
+                  font-weight: 500;
+                  color: #ffd966;
+            }
+
+            .movie-rating span:first-child {
+                  font-size: 1rem;
+            }
+
+            /* loading / empty */
+            .empty-state {
+                  text-align: center;
+                  padding: 3rem 1rem;
+                  color: #8ba0c0;
+                  background: #0f172a60;
+                  border-radius: 2rem;
+                  margin-top: 1rem;
+            }
+
+            /* controls : filters & user input */
+            .controls {
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 1rem;
+                  align-items: flex-end;
+                  margin-bottom: 2rem;
+                  background: #0f172a70;
+                  backdrop-filter: blur(8px);
+                  border-radius: 2rem;
+                  padding: 1.5rem 1.8rem;
+                  border: 1px solid #2d3a5e;
+            }
+
+            .input-group {
+                  flex: 2;
+                  min-width: 180px;
+            }
+
+            .input-group label {
+                  display: block;
+                  font-size: 0.75rem;
+                  font-weight: 600;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                  color: #9bb9e5;
+                  margin-bottom: 6px;
+            }
+
+            .input-group input,
+            .input-group select {
+                  width: 100%;
+                  background: #0b0f1c;
+                  border: 1px solid #2d3e66;
+                  padding: 0.7rem 1rem;
+                  border-radius: 2rem;
+                  color: white;
+                  font-size: 0.9rem;
+                  outline: none;
+                  transition: all 0.2s;
+            }
+
+            .input-group input:focus,
+            .input-group select:focus {
+                  border-color: #facc15;
+                  box-shadow: 0 0 0 2px #facc1530;
+            }
+
+            button {
+                  background: #facc15;
+                  border: none;
+                  padding: 0.7rem 1.6rem;
+                  border-radius: 2.5rem;
+                  font-weight: 700;
+                  font-size: 0.9rem;
+                  color: #0a0f1f;
+                  cursor: pointer;
+                  transition: all 0.2s ease;
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 6px;
+                  box-shadow: 0 5px 12px rgba(250, 204, 21, 0.2);
+            }
+
+            button:hover {
+                  background: #ffdf6c;
+                  transform: scale(0.97);
+                  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            }
+
+            .reset-btn {
+                  background: #2d3e66;
+                  color: #f1f5f9;
+                  box-shadow: none;
+            }
+
+            .reset-btn:hover {
+                  background: #3f5483;
+                  transform: scale(0.97);
+            }
+
+            /* genre quick filter */
+            .genre-chips {
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 10px;
+                  margin: 1rem 0 0.5rem;
+                  justify-content: center;
+            }
+
+            .chip {
+                  background: #1e293b;
+                  padding: 6px 16px;
+                  border-radius: 40px;
+                  font-size: 0.8rem;
+                  font-weight: 500;
+                  color: #cbd5e6;
+                  cursor: pointer;
+                  transition: 0.1s linear;
+                  border: 1px solid transparent;
+            }
+
+            .chip.active {
+                  background: #facc15;
+                  color: #0a0f1f;
+                  font-weight: bold;
+                  border-color: #ffea9e;
+            }
+
+            .chip:hover:not(.active) {
+                  background: #334155;
+                  color: white;
+            }
+
+            footer {
+                  text-align: center;
+                  margin-top: 3rem;
+                  font-size: 0.75rem;
+                  color: #4a5a7a;
+            }
+
+            @media (max-width: 640px) {
+                  body {
+                        padding: 1rem;
+                  }
+
+                  .rec-panel {
+                        padding: 1rem;
+                  }
+
+                  .movie-grid {
+                        gap: 1rem;
+                  }
+
+                  .controls {
+                        flex-direction: column;
+                        align-items: stretch;
+                  }
+            }
+      </style>
+</head>
+
+<body>
+      <div class="app">
+            <div class="hero">
+                  <h1>
+                        🎬 CineMatch <span>AI</span>
+                  </h1>
+                  <div class="tagline">Discover your next favorite film · smart recommendations based on taste</div>
+            </div>
+
+            <!-- interactive filters & search -->
+            <div class="controls">
+                  <div class="input-group" style="flex: 2;">
+                        <label>🍿 Movie title / keyword</label>
+                        <input type="text" id="searchInput" placeholder="e.g., Inception, Dark Knight, comedy..."
+                              autocomplete="off">
+                  </div>
+                  <div class="input-group">
+                        <label>⭐ Minimum rating (0–10)</label>
+                        <input type="number" id="ratingFilter" step="0.1" min="0" max="10" value="0">
+                  </div>
+                  <div class="input-group">
+                        <label>🎭 Genre filter</label>
+                        <select id="genreSelect">
+                              <option value="all">All genres</option>
+                              <option value="Action">🔥 Action</option>
+                              <option value="Drama">🎭 Drama</option>
+                              <option value="Comedy">😂 Comedy</option>
+                              <option value="Sci-Fi">🚀 Sci-Fi</option>
+                              <option value="Thriller">🔪 Thriller</option>
+                              <option value="Romance">💖 Romance</option>
+                              <option value="Adventure">🗺️ Adventure</option>
+                              <option value="Fantasy">✨ Fantasy</option>
+                              <option value="Crime">🚔 Crime</option>
+                        </select>
+                  </div>
+                  <button id="applyFiltersBtn">🎯 Apply filters</button>
+                  <button id="resetBtn" class="reset-btn">⟳ Reset all</button>
+            </div>
+
+            <!-- quick genre chips (UX boost) -->
+            <div class="genre-chips" id="genreChipContainer"></div>
+
+            <!-- Recommendations output -->
+            <div class="rec-panel">
+                  <div class="rec-header">
+                        <h2>📽️ For you · recommended picks</h2>
+                        <div class="rec-badge" id="resultCount">loading films...</div>
+                  </div>
+                  <div id="moviesContainer" class="movie-grid">
+                        <div class="empty-state">✨ Loading cinematic universe...</div>
+                  </div>
+            </div>
+            <footer>🍿 smart recommendations — based on curated movie library & intelligent filtering</footer>
+      </div>
+
+      <script>
+            // ---------- MOVIE DATABASE (enriched with genres, ratings, year) ----------
+            const MOVIE_DB = [
+                  { id: 1, title: "The Dark Knight", year: 2008, genre: "Action", rating: 9.0, description: "Batman faces the Joker." },
+                  { id: 2, title: "Inception", year: 2010, genre: "Sci-Fi", rating: 8.8, description: "Dream within a dream." },
+                  { id: 3, title: "Parasite", year: 2019, genre: "Thriller", rating: 8.6, description: "Social satire thriller." },
+                  { id: 4, title: "Spirited Away", year: 2001, genre: "Fantasy", rating: 8.6, description: "Magical spirit world." },
+                  { id: 5, title: "The Grand Budapest Hotel", year: 2014, genre: "Comedy", rating: 8.1, description: "Whimsical caper." },
+                  { id: 6, title: "Interstellar", year: 2014, genre: "Sci-Fi", rating: 8.7, description: "Space and time." },
+                  { id: 7, title: "Joker", year: 2019, genre: "Drama", rating: 8.4, description: "Origin of a villain." },
+                  { id: 8, title: "Knives Out", year: 2019, genre: "Crime", rating: 7.9, description: "Modern whodunnit." },
+                  { id: 9, title: "La La Land", year: 2016, genre: "Romance", rating: 8.0, description: "Musical romance." },
+                  { id: 10, title: "Mad Max: Fury Road", year: 2015, genre: "Action", rating: 8.7, description: "Post-apocalyptic mayhem." },
+                  { id: 11, title: "Get Out", year: 2017, genre: "Thriller", rating: 7.8, description: "Horror social critique." },
+                  { id: 12, title: "Coco", year: 2017, genre: "Adventure", rating: 8.4, description: "Land of the dead." },
+                  { id: 13, title: "The Social Network", year: 2010, genre: "Drama", rating: 7.7, description: "Facebook origin." },
+                  { id: 14, title: "Deadpool", year: 2016, genre: "Comedy", rating: 8.0, description: "Merc with a mouth." },
+                  { id: 15, title: "Prisoners", year: 2013, genre: "Thriller", rating: 8.2, description: "Intense kidnapping drama." },
+                  { id: 16, title: "Arrival", year: 2016, genre: "Sci-Fi", rating: 7.9, description: "Alien linguistics." },
+                  { id: 17, title: "Inside Out", year: 2015, genre: "Adventure", rating: 8.1, description: "Emotions at work." },
+                  { id: 18, title: "The Prestige", year: 2006, genre: "Drama", rating: 8.5, description: "Rival magicians." },
+                  { id: 19, title: "Crazy Rich Asians", year: 2018, genre: "Romance", rating: 7.1, description: "Rom-com in Singapore." },
+                  { id: 20, title: "John Wick", year: 2014, genre: "Action", rating: 7.4, description: "Legendary hitman." }
+            ];
+
+            // Additional movies for diversity
+            const EXTRA_MOVIES = [
+                  { id: 21, title: "Everything Everywhere All at Once", year: 2022, genre: "Action", rating: 8.9, description: "Multiverse madness." },
+                  { id: 22, title: "Top Gun: Maverick", year: 2022, genre: "Action", rating: 8.6, description: "High-flying sequel." },
+                  { id: 23, title: "The Batman", year: 2022, genre: "Crime", rating: 8.3, description: "Dark detective noir." },
+                  { id: 24, title: "Dune", year: 2021, genre: "Sci-Fi", rating: 8.0, description: "Epic desert planet." },
+                  { id: 25, title: "Puss in Boots: The Last Wish", year: 2022, genre: "Adventure", rating: 7.9, description: "Fairytale action." }
+            ];
+            const FULL_MOVIE_LIST = [...MOVIE_DB, ...EXTRA_MOVIES];
+
+            // DOM elements
+            const searchInput = document.getElementById('searchInput');
+            const ratingFilter = document.getElementById('ratingFilter');
+            const genreSelect = document.getElementById('genreSelect');
+            const applyBtn = document.getElementById('applyFiltersBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const moviesContainer = document.getElementById('moviesContainer');
+            const resultCountSpan = document.getElementById('resultCount');
+            const genreChipContainer = document.getElementById('genreChipContainer');
+
+            // ---------- reactive state ----------
+            let currentFilters = {
+                  searchText: "",
+                  minRating: 0,
+                  genre: "all"
+            };
+
+            // ---------- helper: compute recommendations based on text / rating / genre ----------
+            function getFilteredMovies() {
+                  let results = [...FULL_MOVIE_LIST];
+
+                  // 1. text search (title & description soft search)
+                  if (currentFilters.searchText.trim() !== "") {
+                        const lowerQuery = currentFilters.searchText.trim().toLowerCase();
+                        results = results.filter(movie =>
+                              movie.title.toLowerCase().includes(lowerQuery) ||
+                              (movie.description && movie.description.toLowerCase().includes(lowerQuery))
+                        );
+                  }
+
+                  // 2. rating threshold
+                  const minRatingNum = parseFloat(currentFilters.minRating);
+                  if (!isNaN(minRatingNum) && minRatingNum > 0) {
+                        results = results.filter(movie => movie.rating >= minRatingNum);
+                  }
+
+                  // 3. genre filter (exact match, case-insensitive)
+                  if (currentFilters.genre !== "all") {
+                        results = results.filter(movie => movie.genre.toLowerCase() === currentFilters.genre.toLowerCase());
+                  }
+
+                  // Sort by rating DESC (so best recommendations first)
+                  results.sort((a, b) => b.rating - a.rating);
+                  return results;
+            }
+
+            // render movie cards into container
+            function renderMovies() {
+                  const filtered = getFilteredMovies();
+                  resultCountSpan.innerText = `${filtered.length} movie${filtered.length !== 1 ? 's' : ''}`;
+
+                  if (filtered.length === 0) {
+                        moviesContainer.innerHTML = `<div class="empty-state">🎞️ No movies match your filters. Try adjusting or reset! 🍿</div>`;
+                        return;
+                  }
+
+                  const cardsHTML = filtered.map(movie => {
+                        // map rating to stars (visual flair)
+                        const starRating = movie.rating.toFixed(1);
+                        const starsFull = Math.floor(movie.rating / 2);
+                        const starsEmpty = 5 - starsFull;
+                        const starString = '★'.repeat(starsFull) + '☆'.repeat(starsEmpty);
+
+                        // genre icon mapping
+                        let genreIcon = "🎬";
+                        if (movie.genre === "Action") genreIcon = "⚡";
+                        else if (movie.genre === "Drama") genreIcon = "🎭";
+                        else if (movie.genre === "Comedy") genreIcon = "😂";
+                        else if (movie.genre === "Sci-Fi") genreIcon = "🛸";
+                        else if (movie.genre === "Thriller") genreIcon = "🔪";
+                        else if (movie.genre === "Romance") genreIcon = "💕";
+                        else if (movie.genre === "Adventure") genreIcon = "🗺️";
+                        else if (movie.genre === "Fantasy") genreIcon = "✨";
+                        else if (movie.genre === "Crime") genreIcon = "🚔";
+
+                        return `
+        <div class="movie-card">
+          <div class="movie-img">
+            🎞️ ${genreIcon}
+          </div>
+          <div class="movie-info">
+            <div class="movie-title">${escapeHtml(movie.title)}</div>
+            <div><span class="movie-year">📅 ${movie.year}</span></div>
+            <div class="movie-genre">${movie.genre}</div>
+            <div class="movie-rating">
+              <span>⭐ ${starRating}</span>
+              <span style="letter-spacing: 2px; font-size:0.8rem;">${starString}</span>
+            </div>
+            <div style="font-size:0.7rem; margin-top:8px; color:#8aa1c0;">${escapeHtml(movie.description || 'Must-watch gem')}</div>
+          </div>
+        </div>
+      `;
+                  }).join('');
+
+                  moviesContainer.innerHTML = cardsHTML;
+            }
+
+            // simple escape to avoid XSS
+            function escapeHtml(str) {
+                  if (!str) return '';
+                  return str.replace(/[&<>]/g, function (m) {
+                        if (m === '&') return '&amp;';
+                        if (m === '<') return '&lt;';
+                        if (m === '>') return '&gt;';
+                        return m;
+                  }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function (c) {
+                        return c;
+                  });
+            }
+
+            // update filters from UI and rerender
+            function updateFromUI() {
+                  currentFilters.searchText = searchInput.value;
+                  currentFilters.minRating = ratingFilter.value === "" ? 0 : parseFloat(ratingFilter.value);
+                  currentFilters.genre = genreSelect.value;
+                  syncActiveChip();
+                  renderMovies();
+            }
+
+            // sync genre chip highlight with current genre filter
+            function syncActiveChip() {
+                  const allChips = document.querySelectorAll('.chip');
+                  allChips.forEach(chip => {
+                        const genreVal = chip.getAttribute('data-genre');
+                        if ((genreVal === 'all' && currentFilters.genre === 'all') || genreVal === currentFilters.genre) {
+                              chip.classList.add('active');
+                        } else {
+                              chip.classList.remove('active');
+                        }
+                  });
+                  // also update dropdown selection to match
+                  if (genreSelect.value !== currentFilters.genre) {
+                        genreSelect.value = currentFilters.genre;
+                  }
+            }
+
+            // reset all filters
+            function resetAllFilters() {
+                  searchInput.value = "";
+                  ratingFilter.value = "0";
+                  genreSelect.value = "all";
+                  currentFilters = {
+                        searchText: "",
+                        minRating: 0,
+                        genre: "all"
+                  };
+                  syncActiveChip();
+                  renderMovies();
+            }
+
+            // build genre chips from unique genres
+            function buildGenreChips() {
+                  const uniqueGenres = [...new Set(FULL_MOVIE_LIST.map(m => m.genre))].sort();
+                  let chipsHTML = `<div class="chip active" data-genre="all">🎞️ All Movies</div>`;
+                  uniqueGenres.forEach(genre => {
+                        chipsHTML += `<div class="chip" data-genre="${genre}">${getGenreIcon(genre)} ${genre}</div>`;
+                  });
+                  genreChipContainer.innerHTML = chipsHTML;
+
+                  // add event listeners to chips
+                  document.querySelectorAll('.chip').forEach(chip => {
+                        chip.addEventListener('click', (e) => {
+                              const genreVal = chip.getAttribute('data-genre');
+                              if (genreVal === 'all') {
+                                    currentFilters.genre = 'all';
+                                    genreSelect.value = 'all';
+                              } else {
+                                    currentFilters.genre = genreVal;
+                                    genreSelect.value = genreVal;
+                              }
+                              syncActiveChip();
+                              renderMovies();
+                        });
+                  });
+            }
+
+            function getGenreIcon(genre) {
+                  if (genre === "Action") return "⚡";
+                  if (genre === "Drama") return "🎭";
+                  if (genre === "Comedy") return "😂";
+                  if (genre === "Sci-Fi") return "🛸";
+                  if (genre === "Thriller") return "🔪";
+                  if (genre === "Romance") return "💖";
+                  if (genre === "Adventure") return "🗺️";
+                  if (genre === "Fantasy") return "✨";
+                  if (genre === "Crime") return "🚔";
+                  return "🎬";
+            }
+
+            // event listeners & initial load
+            function bindEvents() {
+                  applyBtn.addEventListener('click', () => {
+                        updateFromUI();
+                  });
+                  resetBtn.addEventListener('click', () => {
+                        resetAllFilters();
+                  });
+                  searchInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') updateFromUI();
+                  });
+                  ratingFilter.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') updateFromUI();
+                  });
+                  genreSelect.addEventListener('change', () => {
+                        currentFilters.genre = genreSelect.value;
+                        syncActiveChip();
+                        renderMovies();
+                  });
+            }
+
+            // INIT 
+            function init() {
+                  buildGenreChips();
+                  bindEvents();
+                  // initial render with default filters (all movies)
+                  currentFilters = { searchText: "", minRating: 0, genre: "all" };
+                  searchInput.value = "";
+                  ratingFilter.value = "0";
+                  genreSelect.value = "all";
+                  renderMovies();
+                  syncActiveChip();
+            }
+
+            init();
+      </script>
+</body>
+
+</html>
