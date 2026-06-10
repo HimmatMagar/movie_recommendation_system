@@ -335,7 +335,7 @@
                   <!-- Only heading & search bar as requested -->
                   <div class="hero">
                         <h1>🎬 Movie Recommendation</h1>
-                        <!-- <div class="badge">AI powered suggestions · FastAPI backend</div> -->
+                        <div class="badge">AI powered suggestions · FastAPI backend</div>
                   </div>
 
                   <!-- Simple search bar -->
@@ -501,9 +501,9 @@
             async function fetchRecommendations(query) {
                   if (!query.trim()) {
                         moviesListDiv.innerHTML = `
-                              <div class="empty-state">
-                              🎬 Enter a movie title to get recommendations!
-                              </div>`;
+            <div class="empty-state">
+            🎬 Enter a movie title to get recommendations!
+            </div>`;
                         resultsHeader.style.display = 'none';
                         return;
                   }
