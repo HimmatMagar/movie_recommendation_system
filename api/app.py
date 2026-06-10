@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-import pandas as pd
+from pydantic import BaseModel
 import pickle
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -14,12 +14,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-movies = pickle.load(open("api/movies.pkl", "rb"))
-similarity = pickle.load(open("api/similarity.pkl", "rb"))
+movies = pickle.load(open("artifact/movies.pkl", "rb"))
+similarity = pickle.load(open("artifact/similarity.pkl", "rb"))
 
 def recommend(movie):
-      movie_index = movies[movies['title'] == movie].index[0]
-      
+      matches = movies[movies['title'].str.lower() == movie.lower()]
+      if matches.empty:
+            return None
+            
+      movie_index = matches.index[0]
       distances = similarity[movie_index]
       movie_list = sorted(
             list(enumerate(distances)),
@@ -27,9 +30,13 @@ def recommend(movie):
             key=lambda x: x[1]
       )[1:6]
       
-      for i in movie_list:
-            return movies.iloc[i[0]].title
+      return [movies.iloc[i[0]].title for i in movie_list]
       
+      
+
+class MovieRequest(BaseModel):
+    movie_name: str
+
 
 @app.get("/")
 def root():
@@ -39,9 +46,9 @@ def root():
 def check_health():
       return {"status": 'Ok'}
 
-@app.get("/recommend/{movie_name}")
-def recommend_movie(movie_name: str):
-      result = recommend(movie = movie_name)
+@app.post("/recommend")
+def recommend_movie(request: MovieRequest):
+      result = recommend(movie = request.movie_name)
       
       if result is None:
             raise HTTPException(
@@ -50,6 +57,6 @@ def recommend_movie(movie_name: str):
             )
       
       return {
-            "movie": movie_name,
+            "movie": request.movie_name,
             "recommendation": result
       }

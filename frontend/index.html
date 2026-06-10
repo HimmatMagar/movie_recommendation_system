@@ -335,7 +335,7 @@
                   <!-- Only heading & search bar as requested -->
                   <div class="hero">
                         <h1>🎬 Movie Recommendation</h1>
-                        <div class="badge">AI powered suggestions · FastAPI backend</div>
+                        <!-- <div class="badge">AI powered suggestions · FastAPI backend</div> -->
                   </div>
 
                   <!-- Simple search bar -->
@@ -375,7 +375,7 @@
             // Adjust the endpoint path according to your FastAPI route.
 
             const API_BASE_URL = 'http://127.0.0.1:8000';     // <-- CHANGE IF DIFFERENT
-            const RECOMMEND_ENDPOINT = '/recommend_movie';          // Expected POST endpoint
+            const RECOMMEND_ENDPOINT = '/recommend';          // Expected POST endpoint
 
             // Example: If your fastapi endpoint is POST /recommend?query=something
             // We'll send a JSON body: { "query": "user input" }
@@ -500,13 +500,10 @@
             // Core function: call FastAPI backend
             async function fetchRecommendations(query) {
                   if (!query.trim()) {
-                        // If empty query, show friendly reminder
                         moviesListDiv.innerHTML = `
                               <div class="empty-state">
-                              🎬 Enter a movie title or keyword to get recommendations!<br>
-                              Example: "Inception", "Action movies", "The Dark Knight"
-                              </div>
-                              `;
+                              🎬 Enter a movie title to get recommendations!
+                              </div>`;
                         resultsHeader.style.display = 'none';
                         return;
                   }
@@ -514,28 +511,11 @@
                   showLoading();
 
                   try {
-                        // ---- Adjust request format to match your FastAPI backend ----
-                        // There are two common patterns:
-                        // 1) GET request with query param: /recommend?q=Inception
-                        // 2) POST request with JSON: { "query": "Inception" } or { "movie": "Inception" }
-                        // By default this implements a flexible POST with JSON.
-                        // You can modify the URL and body based on your actual backend.
-
-                        // Option A: POST JSON (recommended for extensibility)
                         const requestBody = {
-                              query: query.trim(),
-                              // If your endpoint expects "movie_title" or "text", adjust below:
-                              // movie_title: query.trim(),
-                              // q: query.trim()
+                              movie_name: query.trim()    // ✅ matches FastAPI MovieRequest
                         };
 
-                        // 🔁 According to your FastAPI, you might change the method or endpoint.
-                        // For a typical FastAPI endpoint like: @app.post("/recommend")
-                        // or @app.get("/recommend")
-                        // We'll try POST with JSON. If your API uses GET query param, switch to GET variant (commented below)
-
-                        // --- USING POST (JSON) ---
-                        const response = await fetch(`${API_BASE_URL}${RECOMMEND_ENDPOINT}`, {
+                        const response = await fetch("http://127.0.0.1:8000/recommend", {
                               method: 'POST',
                               headers: {
                                     'Content-Type': 'application/json',
@@ -543,10 +523,6 @@
                               },
                               body: JSON.stringify(requestBody)
                         });
-
-                        // If POST fails or backend expects GET, uncomment the GET fallback logic below
-                        // For now, if response fails with 405 (method not allowed) or 404, we can try GET as fallback? 
-                        // But we'll handle error gracefully and display instructions.
 
                         if (!response.ok) {
                               let errorDetail = `HTTP ${response.status}`;
@@ -558,21 +534,22 @@
                         }
 
                         const data = await response.json();
+                        console.log("API response:", data);   // helpful for debugging
 
-                        // Parse response - flexible: backend might return { recommendations: [...] } or direct array
                         let recommendations = [];
+
                         if (Array.isArray(data)) {
-                              recommendations = data;
+                              // Plain array of strings or objects
+                              recommendations = data.map(item =>
+                                    typeof item === 'string' ? { title: item } : item
+                              );
                         } else if (data.recommendations && Array.isArray(data.recommendations)) {
-                              recommendations = data.recommendations;
-                        } else if (data.results && Array.isArray(data.results)) {
-                              recommendations = data.results;
-                        } else if (data.movies && Array.isArray(data.movies)) {
-                              recommendations = data.movies;
+                              // ✅ Your FastAPI returns this format
+                              recommendations = data.recommendations.map(item =>
+                                    typeof item === 'string' ? { title: item } : item
+                              );
                         } else {
-                              // fallback: if response has items
-                              recommendations = [];
-                              console.warn('Unexpected response format', data);
+                              console.warn('Unexpected response format:', data);
                         }
 
                         renderMovies(recommendations);
