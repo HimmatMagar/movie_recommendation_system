@@ -543,9 +543,9 @@
                               recommendations = data.map(item =>
                                     typeof item === 'string' ? { title: item } : item
                               );
-                        } else if (data.recommendations && Array.isArray(data.recommendations)) {
-                              // ✅ Your FastAPI returns this format
-                              recommendations = data.recommendations.map(item =>
+                        } else if (data.recommendation && Array.isArray(data.recommendation)) {
+                              // ✅ Your FastAPI returns this format (singular "recommendation")
+                              recommendations = data.recommendation.map(item =>
                                     typeof item === 'string' ? { title: item } : item
                               );
                         } else {
