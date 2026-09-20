@@ -217,4 +217,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Enjoy discovering your next favorite movie!** 🍿
+**Enjoy discovering your next favorite movie!**
