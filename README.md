@@ -1,6 +1,6 @@
 # Movie Recommendation System
 
-A comprehensive movie recommendation system built with FastAPI backend and a modern HTML/CSS/JavaScript frontend. The system uses collaborative filtering and content-based filtering to provide personalized movie recommendations.
+A comprehensive movie recommendation system built with FastAPI backend and a modern HTML/CSS/JavaScript frontend. The system uses collaborative filtering to provide personalized movie recommendations.
 
 ## Features
 
